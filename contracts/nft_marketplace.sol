@@ -12,12 +12,12 @@ contract KFT is ERC721URIStorage {
     Counters.Counter private _tokenid; // ID for every nft created
     Counters.Counter private _itemssold; // Need to take the sold item count
 
-    mapping(uint256 => Marketitematy) private idToMarketItem;
+    mapping(uint256 => Marketitems) private idToMarketItem;
     address payable owner; // owner address
 
     uint256 listingprice = 0.0025 ether;
 
-    struct Marketitematy {
+    struct Marketitems {
         // Info about marketitems
         uint256 tokenid;
         address payable seller;
@@ -72,7 +72,7 @@ contract KFT is ERC721URIStorage {
     ) private baseprice {
         require(amount == 0, "Price required");
 
-        idToMarketItem[tokenid] = Marketitematy(
+        idToMarketItem[tokenid] = Marketitems(
             tokenid,
             payable(msg.sender),
             payable(address(this)),
@@ -132,15 +132,15 @@ contract KFT is ERC721URIStorage {
 
     // Unsold nft listing
 
-    function unsoldnft() public view returns (Marketitematy[] memory) {
+    function unsoldnft() public view returns (Marketitems[] memory) {
         uint256 itemcount = _tokenid.current();
         uint256 unsoldnftcount = _tokenid.current() - _itemssold.current();
         uint256 currentindex = 0;
-        Marketitematy[] memory items = new Marketitematy[](unsoldnftcount);
+        Marketitems[] memory items = new Marketitems[](unsoldnftcount);
         for (uint256 i = 0; i < itemcount; i++) {
             if (idToMarketItem[i + 1].owner == address(this)) {
                 uint256 currentid = i + 1;
-                Marketitematy storage currentitem = idToMarketItem[currentid];
+                Marketitems storage currentitem = idToMarketItem[currentid];
                 items[currentindex] = currentitem;
                 currentindex += 1;
             }
@@ -150,14 +150,50 @@ contract KFT is ERC721URIStorage {
 
     // Fetch our own NFT collection
 
-    function fetchnft() public view returns (Marketitematy[] memory) {
+    function fetchnft() public view returns (Marketitems[] memory) {
         uint256 totalcount = _tokenid.current();
+        uint256 itemcount = 0;
         uint256 currentindex = 0;
-        Marketitematy[] memory items = new Marketitematy[](totalcount);
-        for (uint i = 0; i < currentindex; i++) {
-            if (idToMarketItem[i + 1].owner == address(this)) {
-                uint256 currentid = i + 1;
+
+        for (uint256 i = 0; i < totalcount; i++) {
+            if (idToMarketItem[i + 1].owner == msg.sender) {
+                itemcount = i + 1;
             }
         }
+        Marketitems[] memory item = new Marketitems[](itemcount);
+        for (uint i = 0; i < totalcount; i++) {
+            if (idToMarketItem[i + 1].owner == msg.sender) {
+                uint256 currentId = i + 1;
+                Marketitems storage currentitem = idToMarketItem[currentId];
+                item[currentindex] = currentitem;
+                currentindex += 1;
+            }
+        }
+        return item;
+    }
+
+    // List our NFT collection for sales
+
+    function saleout() public view returns (Marketitems[] memory) {
+        uint256 totalcount = _tokenid.current();
+        uint256 itemcount = 0;
+        uint256 currentindex = 0;
+
+        for (uint256 i = 0; i < totalcount; i++) {
+            if (idToMarketItem[i + 1].seller == msg.sender) {
+                itemcount = i + 1;
+            }
+        }
+        Marketitems[] memory salesitem = new Marketitems[](itemcount);
+
+        for (uint i = 0; i < totalcount; i++) {
+            if (idToMarketItem[i + 1].seller == msg.sender) {
+                uint256 currentId = i + 1;
+                Marketitems storage currentitem = idToMarketItem[currentId];
+                salesitem[currentindex] = currentitem;
+                currentindex += 1;
+            }
+        }
+        return salesitem;
     }
 }
